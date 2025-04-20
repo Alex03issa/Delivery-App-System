@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('role', ['client', 'driver']);
             $table->integer('points_earned')->default(0);
             $table->integer('points_redeemed')->default(0);
-            $table->integer('current_balance')->virtualAs('points_earned - points_redeemed');
+            $table->integer('current_balance')->default(0);
             $table->timestamp('last_earned_at')->nullable();
             $table->timestamp('last_redeemed_at')->nullable();
             $table->enum('status', ['active', 'suspended'])->default('active');

@@ -13,14 +13,18 @@ return new class extends Migration
     {
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->constrained('clients')->onDelete('cascade');
-            $table->foreignId('driver_id')->constrained('drivers')->onDelete('cascade');
-            $table->foreignId('delivery_id')->nullable()->constrained('delivery_requests')->nullOnDelete();
-            $table->tinyInteger('rating'); // 1-5 scale
+            $table->foreignId('delivery_id')->constrained('delivery_requests')->onDelete('cascade');
+            $table->foreignId('reviewer_id')->constrained('users')->onDelete('cascade'); // Who gives the review
+            $table->foreignId('reviewed_id')->constrained('users')->onDelete('cascade'); // Who is being reviewed
+            $table->enum('reviewer_role', ['client', 'driver']);
+            $table->enum('reviewed_role', ['client', 'driver']);
+            $table->tinyInteger('rating'); // 1–5
             $table->text('comment')->nullable();
-            $table->boolean('is_flagged')->default(false); // can be used to hide poor-quality reviews or abuse
+            $table->boolean('is_flagged')->default(false);
+        
             $table->timestamps();
         });
+        
     }
 
     /**
