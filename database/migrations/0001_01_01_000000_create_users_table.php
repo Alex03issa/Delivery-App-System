@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();
+            $table->string('email', 1024);
             $table->string('phone')->nullable();
             $table->string('password');
             $table->enum('role', ['client', 'driver', 'admin']);
@@ -23,13 +23,16 @@ return new class extends Migration
             $table->string('provider_name')->nullable();
             $table->string('provider_id')->nullable();
             $table->string('profile_picture')->nullable();
+            $table->boolean('is_verified')->default(false);
+            $table->text('verification_token')->nullable();
+            $table->string('hashed_email', 255)->unique();
             $table->rememberToken();
             $table->timestamps();
         });
 
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
+            $table->string('hashed_email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });

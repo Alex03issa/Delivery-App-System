@@ -22,6 +22,10 @@ class User extends Authenticatable
         'provider_id',
         'profile_picture',
         'email_verified_at',
+        'is_verified',
+        'verification_token',
+        'hashed_email',
+        'skip_otp_once',
     ];
 
     protected $hidden = [

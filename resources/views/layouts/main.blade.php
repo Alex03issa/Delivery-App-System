@@ -7,24 +7,24 @@
 
     <title>{{ $title }}</title>
 
-    <link rel="icon" type="image/x-icon" href="assets/img/taxi-logo.ico">
-    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/taxi-logo.ico') }}">
+    <link rel="stylesheet" href="{{ asset('assets/bootstrap/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Kaushan+Script">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700">
-    <link rel="stylesheet" href="assets/fonts/fontawesome-all.min.css">
-    <link rel="stylesheet" href="assets/fonts/font-awesome.min.css">
-    <link rel="stylesheet" href="assets/fonts/ionicons.min.css">
-    <link rel="stylesheet" href="assets/fonts/line-awesome.min.css">
-    <link rel="stylesheet" href="assets/fonts/fontawesome5-overrides.min.css">
-    <link rel="stylesheet" href="assets/css/styles.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome-all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/fonts/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/fonts/ionicons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/fonts/line-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome5-overrides.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/styles.min.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
 
     <!-- Booking JS -->
-    <script type="text/javascript" src="assets/js/booking.js"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/booking.js') }}"></script>
 
     <!-- Admin JS -->
-    <script type="text/javascript" src="assets/js/admin.js"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/admin.js') }}"></script>
 
     <!-- Other JS -->
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -43,9 +43,9 @@
 
     @include('partials.footer')
 
-    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{ asset('assets/bootstrap/js/bootstrap.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script src="assets/js/script.min.js"></script>
+    <script src="{{ asset('assets/js/script.min.js') }}"></script>
 
     @yield('scripts')
 
