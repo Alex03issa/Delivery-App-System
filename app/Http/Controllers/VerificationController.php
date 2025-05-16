@@ -12,12 +12,27 @@ use Carbon\Carbon;
 
 class VerificationController extends Controller
 {
+
+
+    public function showHomepageWithVerification()
+    {
+        if (auth()->check() && auth()->user()->is_verified) {
+            
+            return view('home', [
+                'title' => 'Home '
+            ]);
+        }
+
+        return redirect()->route('login')->with('error', 'Please verify your email before accessing the homepage.');
+    }
     /**
      * Handle email verification (Web).
      *
      * @param string $encryptedToken
      * @return \Illuminate\Http\RedirectResponse
      */
+
+     
     public function verify($encryptedToken)
     {
         try {
@@ -68,9 +83,16 @@ class VerificationController extends Controller
             $user->save();
 
             Auth::login($user);
-
             Log::info('Email verified successfully.', ['user_id' => $user->id]);
-            return redirect()->route('home.verified')->with('success', 'Email verified successfully.');
+            
+            if ($user->role === 'driver') {
+                return redirect()->route('driver.register.details', ['user_id' => $user->id])
+                                 ->with('success', 'Email verified. Please complete your driver registration.');
+            }
+            
+            return redirect()->route('home.verified')
+                             ->with('success', 'Email verified successfully.');
+            
         } catch (Exception $e) {
             Log::error('Verification Error (Web): ' . $e->getMessage());
             return redirect()->route('login')->with('error', 'Verification failed: ' . $e->getMessage());

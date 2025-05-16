@@ -37,6 +37,7 @@ Route::get('/', function () {
         'title' => 'Cabs Online | Book A Taxi Ride With Us Today!']);
 })->name('homepage');
 
+
 Route::get('/about', function () {
     return view('about', [
         'title' => 'About | Cabs Online']);
@@ -97,3 +98,15 @@ Route::get('/client/dashboard', [ClientDashboardController::class, 'index'])->na
 
 Route::get('/otp/verify', [OtpController::class, 'showForm'])->name('otp.verify.view');
 Route::post('/otp/verify', [OtpController::class, 'verify'])->name('otp.verify.submit');
+
+
+Route::get('/driver/details/{user_id}', [DriverController::class, 'show'])->name('driver.register.details');
+Route::post('/driver/details/{user_id}', [DriverController::class, 'store'])->name('driver.register.save');
+
+Route::get('/home', [VerificationController::class, 'showHomepageWithVerification'])->middleware(['auth'])->name('home.verified');
+
+
+
+Route::get('/driver/dashboard', function () {
+    return view('driver.dashboard', ['title' => 'Driver Dashboard']);
+})->name('driver.dashboard');
