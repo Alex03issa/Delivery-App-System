@@ -9,20 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::table('locations', function (Blueprint $table) {
-            //
+            $table->timestamp('location_updated_at')->nullable()->after('lng');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::table('locations', function (Blueprint $table) {
-            //
+            $table->dropColumn('location_updated_at');
         });
     }
 };

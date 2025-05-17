@@ -13,6 +13,7 @@ use Laravel\Socialite\Two\InvalidStateException;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
+use App\Models\Client;
 use Exception;
 
 class GoogleAuthController extends Controller
@@ -76,6 +77,12 @@ class GoogleAuthController extends Controller
                 'is_verified'       => true,
                 'email_verified_at' => now(),
             ]);
+
+            Client::create([
+                'user_id' => $user->id,
+            ]);
+            
+            Log::info("Client created for user {$user->id}");
 
             Auth::login($user);
             return redirect()->route('client.dashboard')->with('success', 'Account created with Google!');

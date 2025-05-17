@@ -15,8 +15,16 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\OtpController;
 
 use App\Http\Controllers\ClientDashboardController;
+use App\Http\Controllers\DeliveryController;
 
+use App\Http\Controllers\DriverPanelController;
 
+use App\Http\Controllers\ClientTrackingController;
+
+use App\Http\Controllers\ChatsController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\StripeController;
+use App\Http\Controllers\CryptoController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -42,15 +50,6 @@ Route::get('/about', function () {
     return view('about', [
         'title' => 'About | Cabs Online']);
 });
-
-Route::resource('/booking', PassengerController::class);
-Route::match(['get', 'post'], '/continue-booking', [PassengerController::class, 'continueBooking']);
-
-Route::get('/cancel-booking', [PassengerController::class, 'cancelBooking']);
-
-Route::get('/register', [RegisterController::class, 'index'])
-    ->middleware('guest');
-Route::post('/register', [RegisterController::class, 'store']);
 
 
 Route::get('/admin', function () {
@@ -93,8 +92,11 @@ Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink
 
 
 
-Route::get('/client/dashboard', [ClientDashboardController::class, 'index'])->name('client.dashboard');
+Route::get('/client/dashboard', [ClientDashboardController::class, 'show'])->name('client.dashboard');
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/client/deliveries', [ClientDashboardController::class, 'index'])->name('client.deliveries');
+});
 
 Route::get('/otp/verify', [OtpController::class, 'showForm'])->name('otp.verify.view');
 Route::post('/otp/verify', [OtpController::class, 'verify'])->name('otp.verify.submit');
@@ -108,5 +110,51 @@ Route::get('/home', [VerificationController::class, 'showHomepageWithVerificatio
 
 
 Route::get('/driver/dashboard', function () {
-    return view('driver.dashboard', ['title' => 'Driver Dashboard']);
+    return view('dashboards.driverdahsboards', ['title' => 'Driver Dashboard']);
 })->name('driver.dashboard');
+
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/delivery/create', [DeliveryController::class, 'create'])->name('delivery.create');
+    Route::post('/delivery/store', [DeliveryController::class, 'store'])->name('delivery.store');
+    Route::get('/delivery/track/{id}', [DeliveryController::class, 'track'])->name('delivery.track');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/driver/deliveries', [DriverPanelController::class, 'index'])->name('driver.deliveries');
+    Route::post('/driver/deliveries/{id}/start', [DriverPanelController::class, 'startDelivery'])
+    ->name('driver.delivery.start');
+    Route::get('/driver/deliveries/{id}/start', [DriverPanelController::class, 'start'])
+    ->name('driver.deliveries.start');
+    Route::get('/driver/available-deliveries', [DriverPanelController::class, 'available'])->name('driver.available');
+    Route::post('/driver/accept/{id}', [DriverPanelController::class, 'accept'])->name('driver.accept');
+    
+
+});
+
+
+Route::middleware(['auth'])->get('/client/deliveries/{id}/track', [ClientTrackingController::class, 'track'])->name('client.track');
+
+ Route::get('chat', [ChatsController::class, 'index'])->name('chat');
+
+ Route::post('send-message', [ChatsController::class, 'sendMessage'])->name('send-message');
+
+ Route::get('communication-history', [ChatsController::class, 'getChatHistory'])->name('communication-history');
+
+ Route::post('upload-communication-photo', [ChatsController::class, 'uploadImage'])->name('upload-communication-photo');
+
+ Route::get('get-new-messages/{user_id?}', [ChatsController::class, 'getNewMessages'])->name('get-new-messages');
+
+
+
+ Route::middleware(['auth'])->group(function () {
+    Route::get('/payment/form/{delivery}', [PaymentController::class, 'showPaymentForm'])->name('payment.form');
+    Route::post('/payment/store', [PaymentController::class, 'store'])->name('payment.store');
+});
+
+
+Route::get('/payment/stripe/{payment}', action: [StripeController::class, 'checkout'])->name('stripe.checkout');
+Route::get('/payment/success/{payment}', [StripeController::class, 'success'])->name('payment.success');
+Route::get('/payment/crypto/{payment}', [CryptoController::class, 'checkout'])->name('payment.crypto');
+Route::post('/webhook/coinbase', [CryptoController::class, 'webhook']);

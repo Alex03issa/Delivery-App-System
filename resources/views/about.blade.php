@@ -22,7 +22,7 @@
                         </p>
                         @auth
                             @if(Auth::user()->role === 'client')
-                                <a class="btn btn-primary" role="button" href="/booking" style="margin-left: -4px; background: rgb(59,59,59);">
+                                <a class="btn btn-primary" role="button" href="{{ route('delivery.create') }}" style="margin-left: -4px; background: rgb(59,59,59);">
                                     Request a Delivery
                                 </a>
                             @endif

@@ -13,7 +13,8 @@ class DeliveryLocation extends Model
         'delivery_id',
         'lat',
         'lng',
-        'status',
+        'type',
+        'address',
     ];
 
     protected $casts = [
@@ -25,4 +26,6 @@ class DeliveryLocation extends Model
     {
         return $this->belongsTo(DeliveryRequest::class, 'delivery_id');
     }
+
+    
 }

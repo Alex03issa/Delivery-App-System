@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
+use App\Models\Client;
 use Exception;
 
 class FacebookAuthController extends Controller
@@ -68,6 +69,14 @@ class FacebookAuthController extends Controller
                 'is_verified'       => true,
                 'email_verified_at' => now(),
             ]);
+
+            
+            Client::create([
+                'user_id' => $user->id,
+            ]);
+            
+            Log::info("Client created for user {$user->id}");
+
 
             Auth::login($user);
             return redirect('http://127.0.0.1:8000/client/dashboard')->with('success', 'Account created and logged in with Facebook!');

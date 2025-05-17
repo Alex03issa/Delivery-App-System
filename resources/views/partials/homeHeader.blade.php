@@ -14,7 +14,21 @@
             </div>
         </div>
     </nav>
-
+    <div class="container mt-4">
+        @if (session('success'))
+            <div class="alert alert-success d-flex align-items-center justify-content-between p-3 rounded shadow-sm"
+                style="background-color: #d4edda; border-left: 5px solid #28a745;">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle text-success fs-4 me-3"></i>
+                    <div>
+                        <strong class="text-success">Great job!</strong><br>
+                        <span class="text-dark">{{ session('success') }}</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close ms-3" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+    </div>
     <div class="container hero">
         <div id="image-taxi-row" class="row">
             <!-- Start: Text -->

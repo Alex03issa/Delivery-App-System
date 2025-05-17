@@ -7,7 +7,7 @@
             <div class="col-sm-6 col-md-3 item">
                 <h3>Services</h3>
                 <ul>
-                    <li><a href="/booking">Request Delivery</a></li>
+                    <li><a href="{{ route('delivery.create') }}">Request Delivery</a></li>
                     <li><a href="/register">Become a Courier</a></li>
                     <li><a href="/login">Login</a></li>
                     <li><a href="/admin">Admin Panel</a></li>
@@ -43,7 +43,7 @@
         </div>
 
         <!-- Start: Copyright -->
-        <p class="copyright">Muhamad Miguel Emmara © 2022 - Made With <i class="fas fa-heart"></i></p>
+        <p class="copyright">Alexander Issa © 2025</p>
         <p class="copyright">Delivery App V1.4</p>
         <!-- End: Copyright -->
     </div>

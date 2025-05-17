@@ -7,7 +7,7 @@
             <div class="col-sm-6 col-md-3 item">
                 <h3>Services</h3>
                 <ul>
-                    <li><a href="/booking">Request Delivery</a></li>
+                    <li><a href="{{ route('delivery.create') }}">Request Delivery</a></li>
                     <li><a href="/register">Become a Courier</a></li>
                     <li><a href="/login">Courier Login</a></li>
                     <li><a href="/admin">Admin Panel</a></li>

@@ -96,13 +96,14 @@ class DeliveryRequest extends Model
 
     public function pickupLocation()
     {
-        return $this->hasOne(Location::class)->where('type', 'pickup');
+        return $this->hasOne(DeliveryLocation::class, 'delivery_id')->where('type', 'pickup');
     }
 
     public function dropoffLocation()
     {
-        return $this->hasOne(Location::class)->where('type', 'dropoff');
+        return $this->hasOne(DeliveryLocation::class, 'delivery_id')->where('type', 'dropoff');
     }
+
 
 }
 

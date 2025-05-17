@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Carbon\Carbon;
+use App\Models\Client;
 use Exception;
 
 use App\Models\User;
@@ -49,9 +50,9 @@ class signupController extends Controller
                 'password_confirmation' => $request -> password_confirmation,
                 'role' => $role,
             ], [
-                'name' => 'required|string|max:255|unique:users,name',
+                'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255|unique:users,email',
-                'phone' => 'required|string|max:20|unique:users,phone',
+                'phone' => 'required|string|max:20',
                 'password' => [
                     'required',
                     'string',
@@ -90,6 +91,12 @@ class signupController extends Controller
                 'role' => $role, 
                 'created_at' => now(),
             ]);
+
+            Client::create([
+                'user_id' => $user->id,
+            ]);
+            
+            Log::info("Client created for user {$user->id}");
 
               // Generate email verification token
               $tokenData = json_encode([

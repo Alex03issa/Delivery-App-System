@@ -16,7 +16,7 @@ class Currency extends Model
     ];
 
     protected $casts = [
-        'rate_to_usd' => 'decimal:4',
+        'rate_to_usd' => 'decimal:10',
     ];
 
 

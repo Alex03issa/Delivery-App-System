@@ -2,6 +2,7 @@
 
 @section('container')
     @include('partials.homeHeader')
+  
 
     <!-- About / How it works -->
     <section id="about" style="margin-top: -75px;">

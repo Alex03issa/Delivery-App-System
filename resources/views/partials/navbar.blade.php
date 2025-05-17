@@ -17,7 +17,7 @@
                     @if(Auth::user()->role === 'client')
                         <li class="nav-item" style="margin-top: 10px;">
                             <a class="btn btn-primary" role="button"
-                               style="background: rgba(10,9,8,0.27);" href="/booking">
+                               style="background: rgba(10,9,8,0.27);" href="{{ route('delivery.create') }}">
                                 Request Delivery
                             </a>
                         </li>
@@ -26,8 +26,8 @@
                     <!-- Profile dropdown for logged-in users -->
                     <li class="nav-item dropdown" style="margin-left: 15px;">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown"
-                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                           <img src="{{ Auth::user()->profile_picture ?? 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&background=0D8ABC&color=fff&size=128' }}"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{{ Auth::user()->profile_picture ?? 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&background=0D8ABC&color=fff&size=128' }}"
                                 alt="Profile" class="rounded-circle" width="35" height="35"
                                 style="object-fit: cover; margin-right: 10px;">
 
@@ -36,12 +36,33 @@
                         <ul class="dropdown-menu dropdown-menu-end bg-dark" aria-labelledby="navbarDropdown">
                             @php
                                 $role = Auth::user()->role;
-                                $dashboardRoute = $role === 'admin' ? 'admin.dashboard' :
-                                                  ($role === 'client' ? 'client.dashboard' : 'driver.dashboard');
                             @endphp
+
+                            {{-- Common: Dashboard --}}
                             <li>
-                                <a class="dropdown-item text-light" href="{{ route($dashboardRoute) }}">Dashboard</a>
+                                <a class="dropdown-item text-light" href="{{ route($role . '.dashboard') }}">Dashboard</a>
                             </li>
+
+                            {{-- Client: Track Deliveries --}}
+                            @if($role === 'client')
+                                <li>
+                                    <a class="dropdown-item text-light" href="{{ route('client.deliveries') }}">Track My Deliveries</a>
+                                </li>
+                            @endif
+
+                            {{-- Driver: My Assigned Deliveries + Tracking --}}
+                            @if($role === 'driver')
+                                <li>
+                                    <a class="dropdown-item text-light" href="{{ route('driver.deliveries') }}">My Deliveries</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-light" href="{{ route('driver.available') }}">Available Deliveries</a>
+                                </li>
+                                <li>
+                                    {{--  <a class="dropdown-item text-light" href="{{ route('driver.live.track') }}">Live Map</a>--}}
+                                </li>
+                            @endif
+
                             <li><hr class="dropdown-divider bg-secondary"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
@@ -51,6 +72,7 @@
                             </li>
                         </ul>
                     </li>
+
                 @else
                     <!-- These show ONLY when not logged in -->
                     <li class="nav-item" style="margin-top: 10px;">
