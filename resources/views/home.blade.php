@@ -11,7 +11,7 @@
                 <div class="col-lg-12 text-center" data-aos="zoom-in" data-aos-duration="500" data-aos-once="true">
                     <h3 class="text-muted section-subheading">
                         <i class="fa fa-dot-circle-o" style="color: rgb(254,209,54);"></i><br>
-                        <strong>Cabs Online Services</strong><br>
+                        <strong>{{ config('app.name') }} Services</strong><br>
                     </h3>
                     <div id="div-about" class="text-center">
                         <h2 class="text-uppercase"><strong>HOW IT WORKS</strong></h2>
@@ -121,7 +121,7 @@
                         <div class="div-title"><h2>About us</h2></div>
                         <p style="color: rgb(0,0,0);"><strong><em>Trusted Delivery Services Across All Cities</em></strong></p>
                         <p>
-                            Cabs Online is your reliable delivery platform connecting clients with independent couriers.
+                            {{ config('app.name') }} is your reliable delivery platform connecting clients with independent couriers.
                             From small parcels to urgent packages, we make delivery fast, secure, and transparent with live tracking and real-time updates.
                         </p>
                         <a class="btn btn-primary" href="/booking" style="background: rgb(59,59,59);">Request A Delivery</a>
@@ -137,14 +137,21 @@
         </div>
     </section>
 
-    <!-- Media Logos -->
+    <!-- How it works -->
     <section data-aos="zoom-in" data-aos-duration="1150" data-aos-once="true" class="py-5">
-        <h3 id="seen" class="text-center">As Seen On</h3>
+        <h3 id="how-it-works" class="text-center mb-4">How It Works</h3>
         <div class="container">
-            <div class="row">
-                @foreach (['google', 'facebook', 'airbnb', 'netflix'] as $logo)
-                    <div class="col-sm-6 col-md-3">
-                        <a href="#"><img class="img-fluid d-block mx-auto" src="assets/img/clients/{{ $logo }}.jpg"></a>
+            <div class="row text-center">
+                @foreach ([
+                    ['fa-map-marker', 'Request', 'Pick the pickup and drop-off points on the map and describe the package.'],
+                    ['fa-handshake-o', 'Driver accepts', 'A registered courier accepts the job from the available deliveries list.'],
+                    ['fa-location-arrow', 'Live tracking', 'Follow the driver on the map with a live ETA and chat with them.'],
+                    ['fa-credit-card', 'Pay your way', 'Card (Stripe), crypto (NOWPayments) or cash on delivery.'],
+                ] as [$icon, $heading, $text])
+                    <div class="col-sm-6 col-md-3 mb-3">
+                        <i class="fa {{ $icon }} fa-2x mb-2" style="color: rgb(254,209,54);"></i>
+                        <h5>{{ $heading }}</h5>
+                        <p class="text-muted">{{ $text }}</p>
                     </div>
                 @endforeach
             </div>
@@ -174,7 +181,7 @@
             <div class="row">
                 <div class="col-lg-12 text-center" style="margin-top: -20px;">
                     <h3 class="text-muted section-subheading">
-                        <i class="fa fa-dot-circle-o" style="color: rgb(254,209,54);"></i><br><strong>Cabs Online Benefit List</strong>
+                        <i class="fa fa-dot-circle-o" style="color: rgb(254,209,54);"></i><br><strong>{{ config('app.name') }} Benefit List</strong>
                     </h3>
                     <h2 class="text-uppercase section-heading benefit-space">Why choose us</h2>
                 </div>

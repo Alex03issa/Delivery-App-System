@@ -7,7 +7,7 @@
 
     <title>{{ $title }}</title>
 
-    <link rel="icon" type="image/x-icon" href="/assets/img/taxi-logo.ico">
+    <link rel="icon" type="image/x-icon" href="/assets/img/favicon.ico">
     <link rel="stylesheet" href="/assets/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:400,700">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Kaushan+Script">

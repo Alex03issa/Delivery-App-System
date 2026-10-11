@@ -19,7 +19,7 @@
             <div class="col-sm-6 col-md-3 item">
                 <h3>About</h3>
                 <ul>
-                    <li><a href="/about">Cabs Online</a></li>
+                    <li><a href="/about">{{ config('app.name') }}</a></li>
                     <li><a href="/register">Careers</a></li>
                 </ul>
             </div>
@@ -27,8 +27,8 @@
 
             <!-- Start: Footer Text -->
             <div class="col-md-6 item text">
-                <h3><i class="fa fa-box" style="color: rgb(254,209,54);"></i>&nbsp;Cabs Online</h3>
-                <p>From small parcels to heavy goods — we deliver quickly, safely, and affordably. Cabs Online connects clients with couriers in real time, ensuring smooth and secure delivery services across cities.</p>
+                <h3><i class="fa fa-box" style="color: rgb(254,209,54);"></i>&nbsp;{{ config('app.name') }}</h3>
+                <p>From small parcels to heavy goods — we deliver quickly, safely, and affordably. {{ config('app.name') }} connects clients with couriers in real time, ensuring smooth and secure delivery services across cities.</p>
                 <p>Delivering Forward. Together.</p>
             </div>
             <!-- End: Footer Text -->

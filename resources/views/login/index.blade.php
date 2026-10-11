@@ -31,7 +31,7 @@
             @csrf
             <div class="illustration">
                 <h1 style="font-size: 30px; color: rgb(197,173,50);">Login</h1>
-                <i class="la la-taxi" style="color: rgb(254,209,54);"></i>
+                <i class="la la-truck" style="color: rgb(254,209,54);"></i>
             </div>
 
             <div class="mb-3">

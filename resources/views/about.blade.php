@@ -13,12 +13,12 @@
                         <h2>About Us</h2>
                         <p style="color: rgb(0,0,0);"><strong><em>Trusted Delivery Services Across the Nation</em></strong></p>
                         <p>
-                            Cabs Online is your trusted solution for fast, affordable, and secure delivery. 
+                            {{ config('app.name') }} is your trusted solution for fast, affordable, and secure delivery. 
                             We bridge the digital and physical worlds by instantly connecting individuals and businesses to reliable couriers.
                             Whether it’s packages, documents, or supplies — we move what matters to you, safely and on time.
                             <br><br>
                             We believe in smart logistics. That means real-time tracking, multiple payment options, and flexible scheduling, all at your fingertips. 
-                            At Cabs Online, our pursuit of innovation never stops — we’re constantly redefining how delivery should work.
+                            At {{ config('app.name') }}, our pursuit of innovation never stops — we’re constantly redefining how delivery should work.
                         </p>
                         @auth
                             @if(Auth::user()->role === 'client')
@@ -49,23 +49,23 @@
     </section>
     <!-- End: About Section -->
 
-    <!-- Start: Media Logos -->
+    <!-- How it works -->
     <section data-aos="zoom-in" data-aos-duration="1150" data-aos-once="true" class="py-5">
-        <h3 id="seen" class="text-center">As Seen On</h3>
+        <h3 id="how-it-works" class="text-center mb-4">How It Works</h3>
         <div class="container">
-            <div class="row">
-                <div class="col-sm-6 col-md-3">
-                    <a href="#"><img class="img-fluid d-block mx-auto" src="assets/img/clients/google.jpg" alt="Google"></a>
-                </div>
-                <div class="col-sm-6 col-md-3">
-                    <a href="#"><img class="img-fluid d-block mx-auto" src="assets/img/clients/facebook.jpg" alt="Facebook"></a>
-                </div>
-                <div class="col-sm-6 col-md-3">
-                    <a href="#"><img class="img-fluid d-block mx-auto" src="assets/img/clients/airbnb.jpg" alt="Airbnb"></a>
-                </div>
-                <div class="col-sm-6 col-md-3">
-                    <a href="#"><img class="img-fluid d-block mx-auto" src="assets/img/clients/netflix.jpg" alt="Netflix"></a>
-                </div>
+            <div class="row text-center">
+                @foreach ([
+                    ['fa-map-marker', 'Request', 'Pick the pickup and drop-off points on the map and describe the package.'],
+                    ['fa-handshake-o', 'Driver accepts', 'A registered courier accepts the job from the available deliveries list.'],
+                    ['fa-location-arrow', 'Live tracking', 'Follow the driver on the map with a live ETA and chat with them.'],
+                    ['fa-credit-card', 'Pay your way', 'Card (Stripe), crypto (NOWPayments) or cash on delivery.'],
+                ] as [$icon, $heading, $text])
+                    <div class="col-sm-6 col-md-3 mb-3">
+                        <i class="fa {{ $icon }} fa-2x mb-2" style="color: rgb(254,209,54);"></i>
+                        <h5>{{ $heading }}</h5>
+                        <p class="text-muted">{{ $text }}</p>
+                    </div>
+                @endforeach
             </div>
         </div>
     </section>

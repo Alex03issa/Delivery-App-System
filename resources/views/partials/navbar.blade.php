@@ -1,6 +1,6 @@
 <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-dark" id="mainNav">
     <div class="container">
-        <a class="navbar-brand" href="/"><i class="fa fa-box"></i>&nbsp;Cabs Online</a>
+        <a class="navbar-brand" href="/"><i class="fa fa-box"></i>&nbsp;{{ config('app.name') }}</a>
         <button data-bs-toggle="collapse" data-bs-target="#navbarResponsive"
                 class="navbar-toggler navbar-toggler-right" type="button"
                 aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,9 +57,6 @@
                                 </li>
                                 <li>
                                     <a class="dropdown-item text-light" href="{{ route('driver.available') }}">Available Deliveries</a>
-                                </li>
-                                <li>
-                                    {{--  <a class="dropdown-item text-light" href="{{ route('driver.live.track') }}">Live Map</a>--}}
                                 </li>
                             @endif
 

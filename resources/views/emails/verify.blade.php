@@ -10,7 +10,7 @@
 
         <!-- Title -->
         <h2 style="text-align: center; color: #055ada; font-weight: 700; font-size: 24px; margin-bottom: 20px;">
-            Welcome to Cabs Online
+            Welcome to {{ config('app.name') }}
         </h2>
 
         <!-- Greeting -->
@@ -37,7 +37,7 @@
         </p>
 
         <p style="text-align: center; font-size: 12px; color: #a0a0a0; margin-top: 10px;">
-            &copy; {{ now()->year }} Cabs Online. All rights reserved.
+            &copy; {{ now()->year }} {{ config('app.name') }}. All rights reserved.
         </p>
     </div>
 </body>
