@@ -17,28 +17,34 @@ Built in April–May 2025.
 - Email one-time password (OTP) as a second login step
 - Forgot-password / reset-password flow with custom mail templates
 - Social login with Google and Facebook (Laravel Socialite)
-- Role-based redirect after login (client dashboard, driver panel, admin)
+- Role-based redirect after login (client dashboard, driver dashboard, admin dashboard)
+- `role:` middleware so client, driver and admin areas are only reachable by that role, plus ownership checks on every delivery, tracking, payment and chat endpoint
+- Login, OTP and password-reset endpoints are rate limited
 
 **Deliveries**
 - Delivery request form with Google Places autocomplete for pickup and drop-off, storing coordinates in a `delivery_locations` table
 - Package length / width / height (volume computed), weight, size class (small / medium / large), urgency (normal / urgent), delivery date, contact phone and notes
-- Status lifecycle: `pending` -> `accepted` -> `in_progress` -> completed
-- Driver panel: list of available (unassigned) requests, accept a request, list of active deliveries, start and complete a delivery
+- Status lifecycle: `pending` -> `accepted` -> `in_progress` -> `delivered`
+- Driver panel: list of available (unassigned) requests, accept a request, list of active deliveries, start a delivery and mark it delivered
+- Dashboards with real data: client (delivery counts, recent deliveries with Track / Pay buttons), driver (active jobs, completed jobs, open requests, paid earnings) and admin (users, deliveries by status, platform fees, latest deliveries)
 - Driver onboarding form after sign-up: vehicle type/brand/model, plate and license numbers, registration document upload, and pricing model (fixed price or per km)
 
 **Live tracking**
-- Driver page pushes the browser's geolocation to `/api/driver/update-location` / `/api/tracking/update-location`
-- Client tracking pages poll `/api/tracking/driver-location/{driverId}` every 5 seconds, move the driver marker on a Google Map and show an ETA and online/offline status
+- While a delivery is `in_progress`, the driver's tracking page pushes the browser's geolocation to `POST /api/tracking/update-location` (only the assigned driver can post for that delivery)
+- The client's tracking page polls `GET /api/tracking/driver-location/{driverUserId}` every 5 seconds, moves the driver marker on a Google Map and shows an ETA (only the driver, an admin, or a client with an active delivery assigned to that driver can read it)
+- The API routes use the normal session (`web` + `auth` middleware) because they are called from the Blade pages; the driver's last position is stored as a `live` row in the `locations` table
 
 **Chat**
-- Client-driver messaging limited to users who share a delivery
-- Chat history and polling for new messages
+- Client-driver messaging limited to users who share a delivery (enforced on the contact list, history, new-message stream and send endpoint)
+- Chat history and polling for new messages (server-sent events)
 
 **Payments**
-- Payment page with currency selection (currencies seeded with a USD conversion rate) and a fee split: 10% platform / 90% driver (or 10 / 80 / 10 when a center is involved)
-- Card payments through Stripe Checkout
-- Crypto payments through NOWPayments, plus a Coinbase Commerce checkout with a signed webhook
-- Cash on delivery confirmed immediately
+- "Pay" button on the tracking page, dashboard and delivery list
+- Payment page with currency selection (currencies seeded with their USD value) and a fee split: 10% platform / 90% driver (or 10 / 80 / 10 when a center is involved). All amounts and fees are computed on the server from the delivery price; the form only sends the method and currency
+- Card payments through Stripe Checkout; the payment is only marked paid after the Checkout Session is fetched back from Stripe and is `paid` for the right amount
+- Crypto payments through NOWPayments hosted invoices, confirmed by the signed NOWPayments IPN webhook (`POST /webhook/nowpayments`)
+- A Coinbase Commerce checkout with a signed webhook (`POST /webhook/coinbase`) is also available as an alternative gateway (not linked from the payment page)
+- Cash on delivery: chosen on the payment page, and the delivery is flagged paid when the driver marks it delivered
 
 **Data model** (migrations included): users, clients, drivers, delivery requests and locations, payments, currencies, chats and chat sessions, reviews (with flagging), driver strikes (with severity), driver logs, notifications, calendar integrations, reward rules, user rewards and redemptions, package-size pricing rules.
 
@@ -57,23 +63,27 @@ Built in April–May 2025.
 app/
   Http/Controllers/
     API/                 driver location update + latest-location endpoints
+    AdminDashboardController, ClientDashboardController
     Auth/                Google, Facebook, OTP, forgot/reset password
     DeliveryController   create / store / track deliveries
+    DriverController     driver profile, driver dashboard, complete delivery
     DriverPanelController available, accept, start deliveries
     ChatsController      client-driver messaging
     PaymentController    payment page and fee split
     StripeController     Stripe Checkout
-    CryptoController     NOWPayments + Coinbase Commerce (webhook)
+    CryptoController     NOWPayments (IPN webhook) + Coinbase Commerce (webhook)
     LoginController, signupController, VerificationController
+  Http/Middleware/       EnsureUserHasRole (`role:client`, `role:driver`, `role:admin`)
   Mail/                  LoginOtpMail, PasswordResetMail, VerificationMail
   Models/                DeliveryRequest, Driver, Client, Payment, Chat, ...
 database/
   migrations/            full schema
   seeders/               CurrencySeeder
 resources/views/
-  home, about, login, register, delivery/, driver/, client/, Chat/, payments/, emails/
+  home, about, login, register, dashboards/, admin/, delivery/, driver/, client/, chat/, payments/, emails/
 routes/
-  web.php, api.php
+  web.php, api.php       (both registered in bootstrap/app.php)
+tests/Feature/           DeliveryFlowTest: roles, full delivery + live tracking, payments, chat, OTP login
 public/assets/           CSS, JS, fonts, images
 ```
 
@@ -88,8 +98,8 @@ public/assets/           CSS, JS, fonts, images
 ### Installation
 
 ```bash
-git clone https://github.com/Alex03issa/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/Alex03issa/Delivery-App-System.git
+cd Delivery-App-System
 composer install
 cp .env.example .env
 php artisan key:generate
@@ -103,7 +113,9 @@ Edit `.env`:
 - `HASH_SECRET` - any long random string (used to hash emails and sign verification tokens)
 - `GOOGLE_MAPS_API_KEY` - required for the delivery form and tracking maps
 - `MAIL_*` - SMTP settings so verification, OTP and reset emails can be sent (`MAIL_MAILER=log` writes them to the log instead)
-- `STRIPE_KEY`, `STRIPE_SECRET`, `NOWPAYMENTS_API_KEY`, `COINBASE_COMMERCE_KEY`, `COINBASE_WEBHOOK_SECRET` - payment gateways
+- `STRIPE_KEY`, `STRIPE_SECRET` - Stripe Checkout (test keys work)
+- `NOWPAYMENTS_API_KEY`, `NOWPAYMENTS_IPN_SECRET` - NOWPayments invoices and IPN callbacks (the IPN URL is `https://<your-host>/webhook/nowpayments`, so it must be publicly reachable)
+- `COINBASE_COMMERCE_KEY`, `COINBASE_WEBHOOK_SECRET` - optional Coinbase Commerce gateway (webhook URL `https://<your-host>/webhook/coinbase`)
 - `GOOGLE_CLIENT_ID/SECRET`, `FACEBOOK_CLIENT_ID/SECRET` - social login
 
 ### Run
@@ -116,11 +128,22 @@ php artisan serve
 
 Open http://localhost:8000.
 
+There is no admin sign-up page: create an admin by changing a user's `role` to `admin` in the database.
+
+### Tests
+
+```bash
+php artisan test
+```
+
+The feature tests run on an in-memory SQLite database and cover role protection, the full delivery flow with live tracking, server-side payment amounts, Stripe/NOWPayments confirmation rules, chat permissions and the OTP login.
+
 ## Notes
 
 - No real credentials are included. The Google Maps API key that was hard-coded in the Blade views has been replaced with `config('services.google_maps.key')` (read from `GOOGLE_MAPS_API_KEY`).
-- The admin dashboard views come from the original UI template and are mostly static.
+- Secrets are read through `config()` (never `env()` in app code), so `php artisan config:cache` is safe. Set `APP_DEBUG=false` in production.
 - Payment gateways run against whatever keys you provide; use test-mode keys for local development.
+- Known limitations: the delivery price is entered by the client (the `package_size_rules` table and the driver's per-km / fixed price are not used for pricing yet), driver approval (`is_approved`) is not enforced, and reviews, rewards, strikes and notifications exist only as database tables.
 
 ## Author
 
