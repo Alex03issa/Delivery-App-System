@@ -31,7 +31,7 @@ class ResetPasswordController extends Controller
                 throw new Exception("Invalid token structure.");
             }
     
-            $calculatedHmac = hash_hmac('sha256', $parsed['data'], env('HASH_SECRET'));
+            $calculatedHmac = hash_hmac('sha256', $parsed['data'], config('app.hash_secret'));
             if ($calculatedHmac !== $parsed['hmac']) {
                 throw new Exception("HMAC validation failed.");
             }
@@ -46,7 +46,7 @@ class ResetPasswordController extends Controller
                 throw new Exception("Token has expired.");
             }
     
-            $hashedEmail = hash_hmac('sha256', $tokenData['email'], env('HASH_SECRET'));
+            $hashedEmail = hash_hmac('sha256', $tokenData['email'], config('app.hash_secret'));
             $resetRecord = DB::table('password_reset_tokens')->where('hashed_email', $hashedEmail)->first();
     
             if (!$resetRecord) {
@@ -82,7 +82,7 @@ class ResetPasswordController extends Controller
     public function reset(Request $request)
     {
         try {
-            Log::info('Password reset request received.', ['email' => $request->email]);
+            Log::info('Password reset request received.');
 
             $validator = Validator::make($request->all(), [
                 'token'    => 'required|string',
@@ -109,7 +109,7 @@ class ResetPasswordController extends Controller
                 throw new Exception("Invalid token format.");
             }
 
-            $expectedHmac = hash_hmac('sha256', $incoming['data'], env('HASH_SECRET'));
+            $expectedHmac = hash_hmac('sha256', $incoming['data'], config('app.hash_secret'));
             if ($expectedHmac !== $incoming['hmac']) {
                 throw new Exception("HMAC mismatch.");
             }
@@ -120,7 +120,7 @@ class ResetPasswordController extends Controller
                 throw new Exception("Token has expired.");
             }
 
-            $hashedEmail = hash_hmac('sha256', $request->email, env('HASH_SECRET'));
+            $hashedEmail = hash_hmac('sha256', strtolower(trim($request->email)), config('app.hash_secret'));
 
             $resetRecord = DB::table('password_reset_tokens')->where('hashed_email', $hashedEmail)->first();
 

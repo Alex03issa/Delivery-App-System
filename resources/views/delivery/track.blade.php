@@ -10,9 +10,28 @@
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
 
         <div class="mb-3">
-            <p><strong>Status:</strong> {{ ucfirst($delivery->status) }}</p>
+            <p><strong>Tracking code:</strong> {{ $delivery->tracking_code }}</p>
+            <p><strong>From:</strong> {{ $delivery->pickupLocation->address ?? '—' }}<br>
+               <strong>To:</strong> {{ $delivery->dropoffLocation->address ?? '—' }}</p>
+            @if ($delivery->dropoff_contact_phone)
+                <p><strong>Contact phone:</strong> {{ $delivery->dropoff_contact_phone }}</p>
+            @endif
+            <p><strong>Status:</strong> {{ ucfirst(str_replace('_', ' ', $delivery->status)) }}</p>
+            <p><strong>Price:</strong> ${{ number_format($delivery->price + ($delivery->extra_charge ?? 0), 2) }}
+                @php $payment = $delivery->payment; @endphp
+                @if ($payment && $payment->payment_status === 'confirmed')
+                    <span class="badge bg-success">Paid ({{ strtoupper($payment->payment_method) }})</span>
+                @elseif ($payment)
+                    <span class="badge bg-warning text-dark">Payment {{ $payment->payment_status }}</span>
+                @else
+                    <span class="badge bg-secondary">Unpaid</span>
+                @endif
+            </p>
             <p><strong>Estimated Time of Arrival:</strong> <span id="eta">Calculating...</span></p>
         </div>
 
@@ -36,11 +55,26 @@
             <div class="alert alert-warning mt-3">Driver is not yet assigned to this delivery.</div>
         @endif
 
-        {{-- Show Start button if accepted --}}
-        @if ($delivery->status === 'accepted' && Auth::user()->driver && Auth::user()->driver->id === $delivery->driver_id)
+        {{-- Client: pay for the delivery if it has no confirmed payment yet --}}
+        @if ($delivery->isOwnedByClient(Auth::user()) && $delivery->status !== 'canceled'
+            && !($payment && $payment->payment_status === 'confirmed'))
+            <a href="{{ route('payment.form', $delivery->id) }}" class="btn btn-warning mt-3 w-100">Pay for this delivery</a>
+        @endif
+
+        {{-- Driver: Start button if accepted --}}
+        @if ($delivery->status === 'accepted' && $delivery->isAssignedToDriver(Auth::user()))
             <form method="POST" action="{{ route('driver.delivery.start', $delivery->id) }}" class="mt-3">
                 @csrf
                 <button class="btn btn-success w-100">Start Delivery</button>
+            </form>
+        @endif
+
+        {{-- Driver: Complete button while in progress --}}
+        @if ($delivery->status === 'in_progress' && $delivery->isAssignedToDriver(Auth::user()))
+            <p class="text-muted small mt-3 mb-0">Your location is shared with the client while this page is open.</p>
+            <form method="POST" action="{{ route('driver.delivery.complete', $delivery->id) }}" class="mt-2">
+                @csrf
+                <button class="btn btn-success w-100">Mark as Delivered</button>
             </form>
         @endif
     </div>
@@ -108,7 +142,7 @@ function updateRouteAndETA(origin, destination) {
 function updateDriverPosition() {
     if (!driverId) return;
 
-    fetch(`/api/tracking/driver-location/${driverId}`)
+    fetch(`{{ url('/api/tracking/driver-location') }}/${driverId}`, { headers: { 'Accept': 'application/json' } })
         .then(res => res.json())
         .then(data => {
             const driverPos = {
@@ -129,7 +163,7 @@ function updateDriverPosition() {
 
 // Initial load
 if (driverId) {
-    fetch(`/api/tracking/driver-location/${driverId}`)
+    fetch(`{{ url('/api/tracking/driver-location') }}/${driverId}`, { headers: { 'Accept': 'application/json' } })
         .then(res => res.json())
         .then(data => {
             const initialPos = {
@@ -156,12 +190,13 @@ if (driverId) {
     initMap(pickup);
 }
 
-@if (Auth::user()->driver && $delivery->status === 'in_progress')
+@if ($delivery->isAssignedToDriver(Auth::user()) && $delivery->status === 'in_progress')
 navigator.geolocation.watchPosition(function(position) {
-    fetch("/api/tracking/update-location", {
+    fetch("{{ url('/api/tracking/update-location') }}", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
             "X-CSRF-TOKEN": "{{ csrf_token() }}"
         },
         body: JSON.stringify({

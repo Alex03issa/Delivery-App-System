@@ -2,77 +2,88 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Chat;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-
 use App\Models\DeliveryRequest;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ChatsController extends Controller
 {
+    /**
+     * User ids the current user may chat with: a client can talk to the
+     * drivers of their deliveries, a driver to the clients of theirs.
+     */
+    private function contactIds(User $auth): array
+    {
+        if ($auth->role === 'client' && $auth->client) {
+            return DeliveryRequest::where('delivery_requests.client_id', $auth->client->id)
+                ->join('drivers', 'drivers.id', '=', 'delivery_requests.driver_id')
+                ->distinct()
+                ->pluck('drivers.user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        if ($auth->role === 'driver' && $auth->driver) {
+            return DeliveryRequest::where('delivery_requests.driver_id', $auth->driver->id)
+                ->join('clients', 'clients.id', '=', 'delivery_requests.client_id')
+                ->distinct()
+                ->pluck('clients.user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        return [];
+    }
+
+    private function ensureContact(User $auth, $userId): int
+    {
+        $userId = (int) $userId;
+        abort_unless($userId && in_array($userId, $this->contactIds($auth), true), 403);
+
+        return $userId;
+    }
 
     public function index(Request $request)
     {
         $auth = Auth::user();
-        $role = $auth->role;
-        $selectedUserId = $request->query('with');
-        $users = collect();
-    
-        if ($role === 'client') {
-            $driverIds = DeliveryRequest::where('client_id', $auth->id)
-                ->whereNotNull('driver_id')
-                ->pluck('driver_id')
-                ->unique();
-    
-            $users = User::whereIn('id', function ($query) use ($driverIds) {
-                    $query->select('user_id')
-                          ->from('drivers')
-                          ->whereIn('id', $driverIds);
-                })
-                ->select('id', 'name')
-                ->get();
-    
-        } elseif ($role === 'driver') {
-            $driver = $auth->driver;
-            if ($driver) {
-                $clientIds = DeliveryRequest::where('driver_id', $driver->id)
-                    ->pluck('client_id')
-                    ->unique();
-    
-                $users = User::whereIn('id', $clientIds)
-                    ->select('id', 'name')
-                    ->get();
-            }
+        $contactIds = $this->contactIds($auth);
+
+        $users = User::whereIn('id', $contactIds)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        // Only preselect a conversation the user is allowed to have.
+        $selectedUserId = (int) $request->query('with');
+        if (!in_array($selectedUserId, $contactIds, true)) {
+            $selectedUserId = null;
         }
-    
-        if ($selectedUserId) {
-            $userIds = $users->pluck('id')->toArray();
-            $userIds[] = (int) $selectedUserId;
-    
-            $users = User::whereIn('id', array_unique($userIds))
-                ->select('id', 'name')
-                ->get();
-        }
-    
+
         return view('chat.chat-view', [
             'users' => $users,
             'selectedUserId' => $selectedUserId,
-            'title' => 'Chat'
+            'title' => 'Chat',
         ]);
     }
-    
-    
 
     public function sendMessage(Request $request)
     {
+        $data = $request->validate([
+            'user' => 'required|integer',
+            'message' => 'required|string|max:2000',
+        ]);
+
+        $auth = Auth::user();
+        $to = $this->ensureContact($auth, $data['user']);
+
         $item = new Chat();
         $item->date_time = now();
-        $item->send_by = Auth::user()->id;
-        $item->send_to = $request->user;
+        $item->send_by = $auth->id;
+        $item->send_to = $to;
         $item->message_type = 'text';
-        $item->message = e($request->input('message')); // Use the e helper
+        $item->message = e($data['message']); // stored escaped, rendered as HTML by the chat view
         $item->save();
 
         return $item;
@@ -80,50 +91,56 @@ class ChatsController extends Controller
 
     public function getChatHistory(Request $request)
     {
-        $messages = Chat::with('sender')
-            ->where(function ($query) use ($request) {
-                $query->where('send_by', Auth::user()->id)
-                    ->where('send_to', $request->userID);
-            })
-            ->orWhere(function ($query) use ($request) {
-                $query->where('send_by', $request->userID)
-                    ->where('send_to', Auth::user()->id);
+        $auth = Auth::user();
+        $other = $this->ensureContact($auth, $request->query('userID'));
+
+        $messages = Chat::with('sender:id,name')
+            ->where(function ($query) use ($auth, $other) {
+                $query->where(function ($q) use ($auth, $other) {
+                    $q->where('send_by', $auth->id)->where('send_to', $other);
+                })->orWhere(function ($q) use ($auth, $other) {
+                    $q->where('send_by', $other)->where('send_to', $auth->id);
+                });
             })
             ->orderBy('date_time', 'asc')
             ->get();
 
-        foreach ($messages->where('send_to',Auth::user()->id) as $message) {
-            $message->is_received = 1;
-            $message->update();
-        }
+        Chat::where('send_by', $other)
+            ->where('send_to', $auth->id)
+            ->where('is_received', 0)
+            ->update(['is_received' => 1]);
+
         return $messages;
     }
 
-
-
+    /**
+     * Server-sent event with the next unread message from $user_id (the
+     * browser's EventSource reconnects automatically to poll again).
+     */
     public function getNewMessages($user_id)
     {
-        $message = Chat::where('send_to', Auth::id())
-            ->where('send_by', $user_id)
+        $auth = Auth::user();
+        $other = $this->ensureContact($auth, $user_id);
+
+        $message = Chat::where('send_to', $auth->id)
+            ->where('send_by', $other)
             ->where('is_received', 0)
             ->orderBy('date_time', 'asc')
-            ->with('sender')
+            ->with('sender:id,name')
             ->first();
 
-        header('Content-Type: text/event-stream');
-        header('Cache-Control: no-cache');
-        header('Connection: keep-alive');
-
         if ($message) {
-            echo "data:" . json_encode(['item' => $message]) . "\n\n";
             $message->is_received = 1;
-            $message->save(); 
-        } else {
-            echo "\n\n";
+            $message->save();
         }
 
-        ob_flush();
-        flush();
-    }
+        $body = $message
+            ? 'data:' . json_encode(['item' => $message]) . "\n\n"
+            : "retry: 3000\n\n";
 
+        return response($body, 200, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+        ]);
+    }
 }

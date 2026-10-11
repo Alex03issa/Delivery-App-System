@@ -21,7 +21,7 @@
                         <th>Pickup</th>
                         <th>Dropoff</th>
                         <th>Status</th>
-                        <th>ETA</th>
+                        <th>Delivery date</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -31,15 +31,14 @@
                             <td>{{ $delivery->id }}</td>
                             <td>{{ $delivery->pickupLocation->address ?? '—' }}</td>
                             <td>{{ $delivery->dropoffLocation->address ?? '—' }}</td>
-                            <td><span class="badge bg-primary">{{ ucfirst($delivery->status) }}</span></td>
+                            <td>@include('partials.status-badge', ['status' => $delivery->status])</td>
                             <td>{{ $delivery->delivery_date->format('Y-m-d H:i') }}</td>
                             <td>
-                                @if(in_array($delivery->status, ['pending', 'accepted', 'in_progress']))
-                                    <a href="{{ route('delivery.track', $delivery->id) }}" class="btn btn-sm btn-info">
-                                        Track
-                                    </a>
-                                @else
-                                    <span class="text-muted">N/A</span>
+                                <a href="{{ route('delivery.track', $delivery->id) }}" class="btn btn-sm btn-info">
+                                    {{ in_array($delivery->status, ['pending', 'accepted', 'in_progress']) ? 'Track' : 'View' }}
+                                </a>
+                                @if($delivery->status !== 'canceled' && !($delivery->payment && $delivery->payment->payment_status === 'confirmed'))
+                                    <a href="{{ route('payment.form', $delivery->id) }}" class="btn btn-sm btn-warning">Pay</a>
                                 @endif
                             </td>
                         </tr>

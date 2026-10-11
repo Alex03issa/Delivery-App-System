@@ -55,6 +55,7 @@ return [
     
     'coinbase' => [
         'key' => env('COINBASE_COMMERCE_KEY'),
+        'webhook_secret' => env('COINBASE_WEBHOOK_SECRET'),
     ],
     
     'google_maps' => [
@@ -63,5 +64,6 @@ return [
 
     'nowpayments' => [
         'key' => env('NOWPAYMENTS_API_KEY'),
+        'ipn_secret' => env('NOWPAYMENTS_IPN_SECRET'),
     ],
 ];

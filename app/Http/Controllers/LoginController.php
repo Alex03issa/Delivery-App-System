@@ -42,7 +42,9 @@ class LoginController extends Controller
                 'password' => 'required|string',
             ]);
 
-            $hashedEmail = hash_hmac('sha256', $request->email, env('HASH_SECRET'));
+            // Emails are stored lower-cased at sign-up, so normalise the same way here.
+            $normalizedEmail = strtolower(trim($request->email));
+            $hashedEmail = hash_hmac('sha256', $normalizedEmail, config('app.hash_secret'));
             $user = User::where('hashed_email', $hashedEmail)->first();
 
             if (!$user) {
@@ -57,7 +59,7 @@ class LoginController extends Controller
                 }
 
                 $email = Crypt::decryptString($decrypted['email']);
-                if ($email !== $request->email) {
+                if (strtolower(trim($email)) !== $normalizedEmail) {
                     return back()->withErrors(['email' => 'Invalid credentials.']);
                 }
 
@@ -82,25 +84,22 @@ class LoginController extends Controller
                     $user->skip_otp_once = false;
                     $user->save();
                     Auth::login($user, true);
+                    $request->session()->regenerate();
                     return $this->redirectByRole($user);
                 }
 
-                if ($request->has('remember')) {
-                    $user->skip_otp_once = true;
-                    $user->save();
-                }
-                
-                // Otherwise, generate OTP and redirect to verify page
+                // Otherwise, generate OTP and redirect to verify page.
+                // ("Remember me" is only applied after the OTP is verified, in OtpController.)
                 $otpData = [
                     'id' => $user->id,
-                    'code' => strval(rand(100000, 999999)),
+                    'code' => strval(random_int(100000, 999999)),
                     'expires_at' => now()->addMinutes(3)->timestamp
                 ];
                 $user->otp_code = json_encode($otpData);
                 $user->save();
                 
                 session([
-                    'otp_email' => $user->email,
+                    'otp_user_id' => $user->id,
                     'otp_remember' => $request->has('remember'),
                 ]);
                 
@@ -178,7 +177,7 @@ protected function getDecryptedEmail($user)
                 'timestamp' => now()->addMinutes(30)->timestamp,
             ]);
 
-            $hmac = hash_hmac('sha256', $tokenData, env('HASH_SECRET'));
+            $hmac = hash_hmac('sha256', $tokenData, config('app.hash_secret'));
             $token = json_encode(['data' => $tokenData, 'hmac' => $hmac]);
             $user->update(['verification_token' => Crypt::encryptString($token)]);
 
@@ -201,7 +200,7 @@ protected function getDecryptedEmail($user)
             }
 
             $decryptedEmail = Crypt::decryptString($data['email']);
-            $calculatedHash = hash_hmac('sha256', $decryptedEmail, env('HASH_SECRET'));
+            $calculatedHash = hash_hmac('sha256', $decryptedEmail, config('app.hash_secret'));
 
             if ($calculatedHash !== $data['hash']) {
                 throw new Exception("Hash verification failed.");

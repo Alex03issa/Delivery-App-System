@@ -30,7 +30,7 @@ class FacebookAuthController extends Controller
             $fbUser = Socialite::driver('facebook')->stateless()->user();
 
             $normalizedEmail = strtolower(trim($fbUser->getEmail()));
-            $hashedEmail = hash_hmac('sha256', $normalizedEmail, env('HASH_SECRET'));
+            $hashedEmail = hash_hmac('sha256', $normalizedEmail, config('app.hash_secret'));
 
             $user = User::where('provider_id', $fbUser->getId())
                         ->orWhere('hashed_email', $hashedEmail)

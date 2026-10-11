@@ -5,11 +5,14 @@
         <div class="form-container">
             <div class="image-holder"></div>
 
-            <form method="POST" action="{{ route('driver.register.save', $user->id) }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('driver.register.save') }}" enctype="multipart/form-data">
                 @csrf
 
                 <h2 class="text-center mb-3"><strong>Welcome, {{ $user->name }}</strong></h2>
                 <p class="text-center">Complete your driver profile to get started.</p>
+                @if ($errors->any())
+                    <div class="alert alert-danger">{{ $errors->first() }}</div>
+                @endif
 
                 <div class="mb-3">
                     <input class="form-control" name="vehicle_type" placeholder="Vehicle Type" required>

@@ -103,7 +103,7 @@
 
             {{-- Contact --}}
             <div class="mb-3">
-                <input type="text" class="form-control" name="contact_phone" placeholder="Contact Phone"
+                <input type="text" class="form-control" name="contact_phone" placeholder="Recipient phone (at drop-off)"
                        value="{{ old('contact_phone') }}">
             </div>
             <div class="mb-3">

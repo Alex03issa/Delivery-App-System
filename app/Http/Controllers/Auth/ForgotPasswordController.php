@@ -25,13 +25,13 @@ class ForgotPasswordController extends Controller
     public function sendResetLinkEmail(Request $request)
     {
         try {
-            Log::info('Password reset request received.', ['email' => $request->email]);
+            Log::info('Password reset request received.');
 
             $request->validate(['email' => 'required|email']);
 
             $normalizedEmail = strtolower(trim($request->email));
             Log::info('Normalized email', ['email' => $normalizedEmail]);
-            $hashedEmail = hash_hmac('sha256', $normalizedEmail, env('HASH_SECRET'));
+            $hashedEmail = hash_hmac('sha256', $normalizedEmail, config('app.hash_secret'));
             Log::info('Hashed email', ['hash' => $hashedEmail]);
             $user = User::where('hashed_email', $hashedEmail)->first();
 
@@ -45,7 +45,7 @@ class ForgotPasswordController extends Controller
                 'email'     => $normalizedEmail,
                 'timestamp' => now()->addMinutes(30)->timestamp,
             ]);
-            $hmac = hash_hmac('sha256', $tokenPayload, env('HASH_SECRET'));
+            $hmac = hash_hmac('sha256', $tokenPayload, config('app.hash_secret'));
             $encryptedToken = Crypt::encryptString(json_encode(['data' => $tokenPayload, 'hmac' => $hmac]));
 
             DB::table('password_reset_tokens')->updateOrInsert(

@@ -1,118 +1,61 @@
 @extends('admin.layouts.main')
 
 @section('container')
-    @include('partials.navbar')
-    <section>
-        @if (session()->has('success'))
-            <script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Congratulations!',
-                    html: '{!! session('success') !!}'
-                })
-            </script>
-        @endif
+@include('partials.navbar')
 
-        @if (session()->has('unassignedError'))
-            <script>
-                Swal.fire(
-                    'Error!',
-                    '{{ session('unassignedError') }}',
-                    'error'
-                )
-            </script>
-        @endif
+<div class="container" style="margin-top: 110px; margin-bottom: 60px;">
+    <h2 class="mb-4">Admin dashboard</h2>
 
-        <!-- Start: Ludens - 1 Index Table with Search & Sort Filters  -->
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12 col-sm-6 col-md-6">
-                    <h3 class="text-dark mb-4">Welcome Back, {{ auth()->user()->username }} </h3>
+    <div class="row">
+        @include('partials.stat-card', ['label' => 'Clients', 'value' => $stats['clients']])
+        @include('partials.stat-card', ['label' => 'Drivers', 'value' => $stats['drivers']])
+        @include('partials.stat-card', ['label' => 'Deliveries', 'value' => $stats['deliveries']])
+        @include('partials.stat-card', ['label' => 'Platform fees (paid)', 'value' => '$' . number_format($stats['platform_fees'], 2)])
+    </div>
+
+    <div class="mb-4">
+        @foreach (['pending', 'accepted', 'in_progress', 'delivered', 'canceled'] as $status)
+            <span class="me-3">@include('partials.status-badge', ['status' => $status]) {{ $statusCounts[$status] ?? 0 }}</span>
+        @endforeach
+        <span class="text-muted">· {{ $stats['confirmed_payments'] }} confirmed payments</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white"><strong>Latest deliveries</strong></div>
+        <div class="card-body p-0">
+            @if ($recent->isEmpty())
+                <p class="p-3 mb-0">No deliveries yet.</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Tracking code</th>
+                                <th>Client</th>
+                                <th>Driver</th>
+                                <th>From → To</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($recent as $delivery)
+                                <tr>
+                                    <td>{{ $delivery->tracking_code }}</td>
+                                    <td>{{ $delivery->client->user->name ?? '—' }}</td>
+                                    <td>{{ $delivery->driver->user->name ?? 'Not assigned' }}</td>
+                                    <td class="small">{{ $delivery->pickupLocation->address ?? '—' }}<br>→ {{ $delivery->dropoffLocation->address ?? '—' }}</td>
+                                    <td>@include('partials.status-badge', ['status' => $delivery->status])</td>
+                                    <td>{{ $delivery->payment ? strtoupper($delivery->payment->payment_method) . ' · ' . $delivery->payment->payment_status : 'none' }}</td>
+                                    <td class="text-end"><a href="{{ route('delivery.track', $delivery->id) }}" class="btn btn-sm btn-info">View</a></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-                <div class="col-12 col-sm-6 col-md-6 text-end" style="margin-bottom: 30px;">
-                    <a href="admin/all" class="btn btn-primary mx-1 mb-2 showAll" role="button" name="showAllBtn">
-                        <i class="fa fa-plus"></i>&nbsp;Show All Bookings </a>
-                    <a href="admin/recent" class="btn btn-primary mx-1 mb-2 showRecent" role="button" name="showRecentBtn">
-                        <i class="fa fa-plus"></i>&nbsp;Show Recent Bookings </a>
-                    <a href="admin/avail" class="btn btn-primary mx-1 mb-2 showAvailPassengers" role="button"
-                        name="showAvailPassengersBtn">
-                        <i class="fa fa-plus"></i>&nbsp;Show All Available Bookings </a>
-
-                    <form action="/logout" method="POST" class="d-inline">
-                        @csrf
-
-                        <button type="submit" class="btn btn-primary mb-2">Log
-                            Out <span data-feather="log-out"></span></button>
-                    </form>
-
-                </div>
-            </div>
-            <!-- Start: TableSorter -->
-            <div class="card" id="TableSorterCard">
-                <div class="card-header py-3">
-                    <div class="row table-topper align-items-center justify-content-between">
-                        <div class="col-lg-5 text-start">
-                            <p class="text-primary m-0 fw-bold">All Bookings</p>
-                        </div>
-                        <div class="py-2 text-end">
-
-                            @if ($errors->any())
-                                <div class="alert alert-danger text-center" style="margin-top:0%">
-                                    @foreach ($errors->all() as $error)
-                                        {{ $error }}
-                                    @endforeach
-                                </div>
-                            @endif
-
-                            <form action="admin/assign-button" method="POST" class="form-inline">
-                                @csrf
-
-                                <div class="row g-3 align-items-center">
-                                    <div class="col-auto">
-                                        <input class="form-control mb-2" type="text" name="bookingInput" id="booking"
-                                            placeholder="Assign Booking Number">
-                                    </div>
-
-                                    <div class="col-auto">
-                                        <button type="submit" name="assignBtn" value="assignBtn"
-                                            class="btn btn-primary flex-fill py-2 mb-2 assignBtn">
-                                            <i class="far fa-paper-plane"></i> Assign</button>
-                                    </div>
-                                </div>
-                            </form>
-
-                            <form action="admin/search-button" method="POST" class="form-inline">
-                                @csrf
-
-                                <div class="row g-3 align-items-center">
-                                    <div class="col-auto">
-                                        <input class="form-control mb-2" type="text" name="bookingInput" id="booking"
-                                            placeholder="Search Booking Number">
-                                    </div>
-
-                                    <div class="col-auto">
-                                        <button type="submit" name="searchBtn" value="searchBtn"
-                                            class="btn btn-primary flex-fill py-2 mb-2 assignBtn">
-                                            <i class="far fa-paper-plane"></i> Search</button>
-                                    </div>
-                                </div>
-                            </form>
-
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <div class="table-responsive">
-                            <div id="tableID">
-                                <b class="text-warning">Bookings info will be listed here.</b>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- End: TableSorter -->
+            @endif
         </div>
-        <!-- End: Ludens - 1 Index Table with Search & Sort Filters  -->
-    </section>
+    </div>
+</div>
 @endsection

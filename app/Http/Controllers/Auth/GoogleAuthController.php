@@ -35,7 +35,7 @@ class GoogleAuthController extends Controller
 
             $normalizedEmail = strtolower(trim($googleUser->getEmail()));
             Log::info('Normalized email', ['email' => $normalizedEmail]);
-            $hashedEmail = hash_hmac('sha256', $normalizedEmail, env('HASH_SECRET'));
+            $hashedEmail = hash_hmac('sha256', $normalizedEmail, config('app.hash_secret'));
             Log::info('Hashed email', ['hash' => $hashedEmail]);
 
             $user = User::where('email', $googleUser->getEmail())

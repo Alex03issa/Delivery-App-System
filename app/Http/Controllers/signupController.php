@@ -72,7 +72,7 @@ class signupController extends Controller
             }
 
             // Hash & encrypt email
-            $saltedHash = hash_hmac('sha256', $normalizedEmail, env('HASH_SECRET'));
+            $saltedHash = hash_hmac('sha256', $normalizedEmail, config('app.hash_secret'));
             $firstEncryption = Crypt::encryptString($normalizedEmail);
             $encryptedEmail = Crypt::encryptString(json_encode([
                 'email' => $firstEncryption,
@@ -104,7 +104,7 @@ class signupController extends Controller
                 'email' => $normalizedEmail,
                 'timestamp' => now()->addMinutes(30)->timestamp,
             ]);
-            $hmac = hash_hmac('sha256', $tokenData, env('HASH_SECRET'));
+            $hmac = hash_hmac('sha256', $tokenData, config('app.hash_secret'));
             $verificationToken = Crypt::encryptString(json_encode(['data' => $tokenData, 'hmac' => $hmac]));
            
             $user->verification_token = $verificationToken;
@@ -140,7 +140,7 @@ class signupController extends Controller
             }
 
             $decryptedEmail = Crypt::decryptString($data['email']);
-            $calculatedHash = hash_hmac('sha256', $decryptedEmail, env('HASH_SECRET'));
+            $calculatedHash = hash_hmac('sha256', $decryptedEmail, config('app.hash_secret'));
 
             if ($calculatedHash !== $data['hash']) {
                 throw new Exception("Hash mismatch.");

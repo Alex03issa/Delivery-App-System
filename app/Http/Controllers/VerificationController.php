@@ -47,7 +47,7 @@ class VerificationController extends Controller
 
             $tokenData = $decodedToken['data'];
             $providedHmac = $decodedToken['hmac'];
-            $calculatedHmac = hash_hmac('sha256', $tokenData, env('HASH_SECRET'));
+            $calculatedHmac = hash_hmac('sha256', $tokenData, config('app.hash_secret'));
 
             if ($calculatedHmac !== $providedHmac) {
                 throw new Exception('Token integrity verification failed.');
@@ -64,7 +64,7 @@ class VerificationController extends Controller
                 throw new Exception('Token has expired.');
             }
 
-            $hashedEmail = hash_hmac('sha256', $normalizedEmail, env('HASH_SECRET'));
+            $hashedEmail = hash_hmac('sha256', $normalizedEmail, config('app.hash_secret'));
             $user = User::where('id', $decodedData['user_id'])
                         ->where('hashed_email', $hashedEmail)
                         ->first();
@@ -86,7 +86,7 @@ class VerificationController extends Controller
             Log::info('Email verified successfully.', ['user_id' => $user->id]);
             
             if ($user->role === 'driver') {
-                return redirect()->route('driver.register.details', ['user_id' => $user->id])
+                return redirect()->route('driver.register.details')
                                  ->with('success', 'Email verified. Please complete your driver registration.');
             }
             

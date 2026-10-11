@@ -1,7 +1,8 @@
 @extends('layouts.main')
 
 @section('container')
-<div class="container mt-5">
+@include('partials.navbar')
+<div class="container" style="margin-top: 100px;">
     <h3>Available Deliveries</h3>
 
     @if ($deliveries->isEmpty())

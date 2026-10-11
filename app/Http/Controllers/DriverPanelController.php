@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Log;
-
 use App\Models\DeliveryRequest;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,32 +10,18 @@ class DriverPanelController extends Controller
     public function index()
     {
         $user = Auth::user();
-        Log::debug('DriverPanelController@index called', [
-            'user_id' => $user->id,
-            'user_role' => $user->role,
-        ]);
-    
         $driver = $user->driver;
     
         if (!$driver) {
-            Log::warning('Driver record missing for user', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'expected_driver_user_id' => $user->id,
-            ]);
-    
-            return redirect()->back()->with('error', 'You must be registered as a driver to access this page.');
+            return redirect()->route('driver.register.details')
+                ->with('success', 'Please complete your driver profile first.');
         }
     
         $deliveries = DeliveryRequest::with(['pickupLocation', 'dropoffLocation'])
             ->where('driver_id', $driver->id)
-            ->whereIn('status', ['accepted', 'picked_up', 'in_transit'])
+            ->whereIn('status', ['accepted', 'in_progress'])
+            ->orderBy('delivery_date')
             ->get();
-    
-        Log::info('Driver deliveries loaded', [
-            'driver_id' => $driver->id,
-            'delivery_count' => $deliveries->count(),
-        ]);
     
         return view('driver.deliveries', [
             'deliveries' => $deliveries,
@@ -48,6 +32,12 @@ class DriverPanelController extends Controller
     public function start($id)
     {
         $delivery = DeliveryRequest::with(['pickupLocation', 'dropoffLocation'])->findOrFail($id);
+        abort_unless($delivery->isAssignedToDriver(Auth::user()), 403);
+
+        if ($delivery->status !== 'in_progress') {
+            return redirect()->route('delivery.track', $delivery->id);
+        }
+
         return view('driver.start', [
             'delivery' => $delivery,
             'title' => 'Delivery Start'
@@ -96,7 +86,8 @@ class DriverPanelController extends Controller
         $driver = $user->driver;
 
         if (!$driver) {
-            return redirect()->back()->with('error', 'You must be a driver to accept deliveries.');
+            return redirect()->route('driver.register.details')
+                ->with('success', 'Please complete your driver profile first.');
         }
 
         $delivery = DeliveryRequest::where('id', $id)

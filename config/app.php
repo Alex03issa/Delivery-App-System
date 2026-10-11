@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Delivery App'),
 
     /*
     |--------------------------------------------------------------------------
@@ -96,6 +96,13 @@ return [
     */
 
     'cipher' => 'AES-256-CBC',
+
+    /*
+    | Secret used to HMAC user emails (lookup hash) and signed tokens.
+    | Read through config() so it keeps working after `php artisan config:cache`.
+    */
+
+    'hash_secret' => env('HASH_SECRET'),
 
     'key' => env('APP_KEY'),
 

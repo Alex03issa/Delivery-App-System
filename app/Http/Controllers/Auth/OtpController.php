@@ -23,12 +23,12 @@ class OtpController extends Controller
             'otp' => 'required|digits:6',
         ]);
 
-        $email = session('otp_email');
-        if (!$email) {
+        $userId = session('otp_user_id');
+        if (!$userId) {
             return redirect()->route('login')->withErrors(['otp' => 'Session expired. Please login again.']);
         }
 
-        $user = User::whereRaw("BINARY email = ?", [$email])->first(); // or use hashed_email if applicable
+        $user = User::find($userId);
 
         if (!$user) {
             return redirect()->route('login')->withErrors(['otp' => 'User not found.']);
@@ -43,7 +43,7 @@ class OtpController extends Controller
             return back()->withErrors(['otp' => 'Invalid or expired OTP.']);
         }
 
-        if ($request->otp !== $otpData['code']) {
+        if ((int) ($otpData['id'] ?? 0) !== (int) $user->id || !hash_equals((string) $otpData['code'], (string) $request->otp)) {
             return back()->withErrors(['otp' => 'Incorrect OTP.']);
         }
 
@@ -57,7 +57,8 @@ class OtpController extends Controller
         $user->save();
 
         Auth::login($user, $remember);
-        session()->forget(['otp_email', 'otp_remember']);
+        session()->forget(['otp_user_id', 'otp_remember']);
+        session()->regenerate();
 
         Log::info("OTP verified and user logged in: {$user->id}");
 

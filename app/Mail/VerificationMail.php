@@ -43,7 +43,7 @@ class VerificationMail extends Mailable
             $tokenData = $decodedToken['data'];
             $providedHmac = $decodedToken['hmac'];
 
-            $calculatedHmac = hash_hmac('sha256', $tokenData, env('HASH_SECRET'));
+            $calculatedHmac = hash_hmac('sha256', $tokenData, config('app.hash_secret'));
             if ($providedHmac !== $calculatedHmac) {
                 throw new Exception("HMAC validation failed.");
             }

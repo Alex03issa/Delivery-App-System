@@ -16,7 +16,8 @@ class CurrencySeeder extends Seeder
             ['code' => 'BTC', 'name' => 'Bitcoin', 'rate_to_usd' => 30000.0000],
             ['code' => 'ETH', 'name' => 'Ethereum', 'rate_to_usd' => 2000.0000],
             ['code' => 'USDT', 'name' => 'Tether', 'rate_to_usd' => 1.0000],
-            ['code' => 'LBC', 'name' => 'Lebanese Pound', 'rate_to_usd' => 0.000066], // example
+            ['code' => 'USDC', 'name' => 'USD Coin', 'rate_to_usd' => 1.0000],
+            ['code' => 'LBP', 'name' => 'Lebanese Pound', 'rate_to_usd' => 0.0000111732], // ~89,500 LBP per USD (example rate)
         ];
 
         foreach ($currencies as $currency) {

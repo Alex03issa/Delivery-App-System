@@ -34,6 +34,24 @@ class Payment extends Model
         'conversion_rate' => 'decimal:10',
     ];
 
+    /**
+     * Mark the payment as paid (called only after the provider confirmed it).
+     */
+    public function markConfirmed(?string $transactionId = null): void
+    {
+        if ($this->payment_status === 'confirmed') {
+            return;
+        }
+
+        $this->update([
+            'payment_status' => 'confirmed',
+            'paid_at' => now(),
+            'transaction_id' => $transactionId ?? $this->transaction_id,
+        ]);
+
+        $this->delivery?->update(['is_paid' => true]);
+    }
+
     public function delivery()
     {
         return $this->belongsTo(DeliveryRequest::class, 'delivery_id');

@@ -9,7 +9,7 @@
         <!-- Left User Panel -->
         <div class="col-md-3 user-panel p-0">
             @forelse ($users as $user)
-                <div class="user-item" id="user-{{ $user->id }}" onclick="selectUser({{ $user->id }}, '{{ $user->name }}')">
+                <div class="user-item" id="user-{{ $user->id }}" onclick="selectUser({{ $user->id }}, {{ json_encode($user->name, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) }})">
                     <div class="avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</div>
                     <div>{{ $user->name }}</div>
                 </div>

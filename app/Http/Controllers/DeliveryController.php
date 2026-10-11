@@ -12,7 +12,6 @@ class DeliveryController extends Controller
 {
     public function create()
     {
-        Log::info('Client opened delivery create page.', ['user_id' => Auth::id()]);
         return view('delivery.create', [
             'title' => 'Delivery Create'
         ]);
@@ -20,8 +19,6 @@ class DeliveryController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Delivery form submitted.', ['user_id' => Auth::id(), 'input' => $request->all()]);
-
         $request->validate([
             'pickup_location' => 'required|string',
             'pickup_lat' => 'required|numeric',
@@ -42,7 +39,7 @@ class DeliveryController extends Controller
             'price' => 'required|numeric|min:0',
             'extra_charge' => 'nullable|numeric|min:0',
 
-            'contact_phone' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:50',
             'note' => 'nullable|string|max:1000',
         ]);
 
@@ -55,8 +52,6 @@ class DeliveryController extends Controller
 
         $delivery = DeliveryRequest::create([
             'client_id' => $user->client->id,
-            'pickup_location' => $request->pickup_location,
-            'dropoff_location' => $request->dropoff_location,
 
             'length_cm' => $request->length_cm,
             'width_cm' => $request->width_cm,
@@ -71,7 +66,8 @@ class DeliveryController extends Controller
             'price' => $request->price,
             'extra_charge' => $request->extra_charge ?? 0,
 
-            'contact_phone' => $request->contact_phone,
+            // The form has one contact number: the person to call at drop-off.
+            'dropoff_contact_phone' => $request->contact_phone,
             'note' => $request->note,
 
             'status' => 'pending',
@@ -101,11 +97,12 @@ class DeliveryController extends Controller
 
     public function track($id)
     {
-        $delivery = DeliveryRequest::with(['pickupLocation', 'dropoffLocation', 'driver'])->findOrFail($id);
-        Log::info('Client is tracking delivery.', ['delivery_id' => $delivery->id, 'user_id' => Auth::id()]);
+        $delivery = DeliveryRequest::with(['pickupLocation', 'dropoffLocation', 'driver', 'client', 'payment'])->findOrFail($id);
+        abort_unless($delivery->isVisibleTo(Auth::user()), 403);
+
         return view('delivery.track', [
             'delivery' => $delivery,
-            'title' => 'Delivery Create'
+            'title' => 'Track Delivery'
         ]);
     }
 }

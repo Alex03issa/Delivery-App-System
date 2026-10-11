@@ -13,17 +13,12 @@
                 @csrf
 
                 <input type="hidden" name="delivery_id" value="{{ $delivery->id }}">
-                <input type="hidden" name="baseAmount" value="{{ $baseAmount }}">
-                <input type="hidden" name="platform_fee" value="{{ $platformFee }}">
-                <input type="hidden" name="driver_share" value="{{ $driverShare }}">
-                @if ($hasCenterShare)
-                    <div class="col-md-4">
-                        <label class="form-label">Center Share</label>
-                        <input type="text" class="form-control" value="{{ number_format($centerShare, 2) }}" readonly>
-                        <input type="hidden" name="center_share" value="{{ $centerShare }}">
-                    </div>
-                @else
-                    <input type="hidden" name="center_share" value="0">
+
+                @if (session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
+                @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger">{{ $errors->first() }}</div>
                 @endif
 
                 <div class="mb-3">
@@ -86,11 +81,8 @@
 
                 <div class="mb-3 row">
                     <div class="col-md-6">
-                        <input type="hidden" name="amount" id="amount">
-                        <input type="hidden" name="conversion_rate" id="conversion_rate">
-
-                        <label class="form-label">Converted Amount</label>
-                        <input type="text" id="converted_amount" class="form-control" value="{{ number_format($convertedAmount, 10) }}" readonly>
+                        <label class="form-label">Amount to pay in the selected currency</label>
+                        <input type="text" id="converted_amount" class="form-control" value="" readonly>
 
                     </div>
                 </div>
@@ -105,65 +97,53 @@
     </div>
 </div>
 <script>
+// Display only: the server recomputes every amount when the form is submitted.
 const baseAmount = {{ $baseAmount }};
 const currencies = @json($currencies);
+const currencySelect = document.getElementById('currency_id');
 
 function updateConvertedAmount() {
-    const select = document.getElementById('currency_id');
-    const selectedId = parseInt(select.value);
+    const selectedId = parseInt(currencySelect.value);
     const selectedCurrency = currencies.find(c => c.id === selectedId);
-    
+    const output = document.getElementById('converted_amount');
 
-    if (!selectedCurrency) return;
+    if (!selectedCurrency) { output.value = ''; return; }
 
+    // rate_to_usd = how many USD one unit of the currency is worth
     const rate = parseFloat(selectedCurrency.rate_to_usd);
-    const convertedRaw = baseAmount * rate;
+    const converted = baseAmount / rate;
 
-    // Set raw amount in hidden input
-    document.getElementById('amount').value = convertedRaw.toFixed(10);
-    document.getElementById('conversion_rate').value = rate;
-    console.log("Rate:", rate, "Converted:", convertedRaw);
-    // Set pretty display
-    const convertedFormatted = convertedRaw.toLocaleString('en-US', {
-        minimumFractionDigits: convertedRaw < 1 ? 10 : 2,
-        maximumFractionDigits: 10,
-    });
-
-    document.getElementById('converted_amount').value = convertedFormatted;
+    output.value = converted.toLocaleString('en-US', {
+        minimumFractionDigits: converted < 1 ? 8 : 2,
+        maximumFractionDigits: converted < 1 ? 10 : 2,
+    }) + ' ' + selectedCurrency.code;
 }
 
-
 function filterCurrenciesByMethod(method) {
-    const options = document.querySelectorAll('#currency_id option');
-    options.forEach(opt => {
+    currencySelect.querySelectorAll('option').forEach(opt => {
         const type = opt.dataset.type;
-        const code = opt.dataset.code;
-
-        // Hide LBP only if method is card
-        const hideLBP = method === 'card' && code === 'LBP';
-
         if (!type) return;
 
-        const isCrypto = method === 'crypto' && type !== 'crypto';
-        const isFiatOrCOD = method !== 'crypto' && type === 'crypto';
+        const hideLBP = method === 'card' && opt.dataset.code === 'LBP';
+        const wrongForCrypto = method === 'crypto' && type !== 'crypto';
+        const wrongForFiat = method !== 'crypto' && type === 'crypto';
 
-        opt.hidden = hideLBP || isCrypto || isFiatOrCOD;
+        opt.hidden = hideLBP || wrongForCrypto || wrongForFiat;
     });
 
-    // If current selected is hidden, reset selection
-    if (select.options[select.selectedIndex]?.hidden && fallbackOption) {
-        fallbackOption.selected = true;
+    // Reset the selection if the chosen currency is now hidden
+    if (currencySelect.options[currencySelect.selectedIndex]?.hidden) {
+        currencySelect.value = '';
     }
 
     updateConvertedAmount();
 }
 
 window.onload = () => {
-    updateConvertedAmount();
     filterCurrenciesByMethod(document.getElementById('payment_method').value);
 };
 
-document.getElementById('currency_id').addEventListener('change', updateConvertedAmount);
+currencySelect.addEventListener('change', updateConvertedAmount);
 document.getElementById('payment_method').addEventListener('change', function () {
     filterCurrenciesByMethod(this.value);
 });
