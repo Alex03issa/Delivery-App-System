@@ -392,7 +392,7 @@
                                 <p class="text-center">A Map For Your Convenience </p>
                             </div>
                         </div><iframe allowfullscreen frameborder="0"
-                            src="https://www.google.com/maps/embed/v1/place?key=AIzaSyB3YYb5sin7I3vXQiaX02RIp9zQn91ClLY&amp;q=Auckland&amp;zoom=15"
+                            src="https://www.google.com/maps/embed/v1/place?key={{ config('services.google_maps.key') }}&amp;q=Auckland&amp;zoom=15"
                             width="100%" height="450"></iframe>
                     </section>
                 </div>

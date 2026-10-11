@@ -26,12 +26,12 @@ class Payment extends Model
 
     protected $casts = [
         'paid_at' => 'datetime',
-        'amount' => 'decimal:2',
+        'amount' => 'decimal:10',
         'platform_fee' => 'decimal:2',
         'driver_share' => 'decimal:2',
         'center_share' => 'decimal:2',
-        'converted_amount' => 'decimal:2',
-        'conversion_rate' => 'decimal:4',
+        'converted_amount' => 'decimal:10',
+        'conversion_rate' => 'decimal:10',
     ];
 
     public function delivery()

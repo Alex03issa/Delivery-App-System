@@ -2,211 +2,69 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Models\DeliveryRequest;
 use App\Models\Driver;
-use App\Models\Passenger;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Jenssegers\Agent\Agent;
+use Illuminate\Support\Facades\Storage;
 
 class DriverController extends Controller
 {
-    protected $agent;
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function show($user_id)
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Driver  $driver
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Driver $driver)
-    {
-        //
-    }
-
-    public function showAll(Passenger $passengers)
-    {
-        $passengers = Passenger::paginate(7)->withQueryString();
-        $this->agent = new Agent();
-
-        return view('admin.table', [
-            'title' => 'All Passengers Booking',
-            "passengers" => $passengers,
-            'agent' => $this->agent,
+        $user = User::findOrFail($user_id);
+        return view('driver.details', [
+            'user' => $user,
+            'title' => 'Home'
         ]);
+    
     }
 
-    public function showRecent(Passenger $Passengers)
+    public function store(Request $request, $user_id)
     {
-        $Passengers = Passenger::where('status', 'Unassigned')->orderBy('created_at', 'desc')->take(7)->paginate(7)->withQueryString();
-        $this->agent = new Agent();
-
-        return view('admin.table', [
-            'title' => 'All Passengers Recent Booking',
-            "passengers" => $Passengers,
-            'agent' => $this->agent,
-        ]);
-    }
-
-    public function showAvail(Passenger $Passengers)
-    {
-        $Passengers = Passenger::where('status', 'Unassigned')->paginate(7)->withQueryString();
-        $this->agent = new Agent();
-
-        return view('admin.table', [
-            'title' => 'All Passengers Available Booking',
-            "passengers" => $Passengers,
-            'agent' => $this->agent,
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Driver  $driver
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Driver $driver)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Driver  $driver
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Driver $driver)
-    {
-        //
-    }
-
-    public function assign(Request $request)
-    {
-        Passenger::where('bookingRefNo', $request['bookingRefNo'])
-            ->update([
-                'status' => 'Assigned',
-                'assignedBy' => auth()->user()->username,
-            ]);
-
-        // Variable To Pass
-        $bookingRef = $request['bookingRefNo'];
-        $driverName = auth()->user()->username;
-
-        return redirect('/admin')->with('success', "Booking Reference $bookingRef <br> Has Been Assigned For $driverName");
-    }
-
-    public function assignBtn(Request $request)
-    {
-        $validated = $request->validate([
-            'bookingInput' => 'required',
+        $request->validate([
+            'vehicle_type' => 'required|string',
+            'plate_number' => 'required|string',
+            'license_number' => 'required|string',
+            'pricing_type' => 'required|in:fixed,per_km',
+            'price_per_km' => 'nullable|numeric',
+            'fixed_price' => 'nullable|numeric',
+            'registration_document' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
         ]);
 
-        // Check if bookingRefNo exist and Status its 'Unassigned'
-        $exist = Passenger::select('bookingRefNo')
-            ->where('bookingRefNo', $request->input('bookingInput'))
-            ->first();
-
-        if ($exist) {
-            $isUnassigned = Passenger::select('bookingRefNo')
-                ->where('bookingRefNo', $request->input('bookingInput'))
-                ->where('status', 'Unassigned')
-                ->first();
-
-            if ($isUnassigned) {
-                Passenger::where('bookingRefNo', $validated['bookingInput'])
-                    ->update([
-                        'status' => 'Assigned',
-                        'assignedBy' => auth()->user()->username,
-                    ]);
-
-                return redirect('/admin')->with('success', 'Booking Has Been Assigned');
-            }
-
-            return redirect('/admin')->with('unassignedError', 'This Booking Has Been Assigned, Please Choose Another Passengers');
+        $path = null;
+        if ($request->hasFile('registration_document')) {
+            $path = $request->file('registration_document')->store('documents', 'public');
         }
-        return redirect('/admin')->with('unassignedError', 'This Booking Number Did Not Exist');
+
+        Driver::create([
+            'user_id' => $user_id,
+            'vehicle_type' => $request->vehicle_type,
+            'vehicle_brand' => $request->vehicle_brand,
+            'vehicle_model' => $request->vehicle_model,
+            'vehicle_color' => $request->vehicle_color,
+            'vehicle_year' => $request->vehicle_year,
+            'plate_number' => $request->plate_number,
+            'license_number' => $request->license_number,
+            'license_expiry' => $request->license_expiry,
+            'registration_document' => $path,
+            'pricing_type' => $request->pricing_type,
+            'price_per_km' => $request->price_per_km,
+            'fixed_price' => $request->fixed_price,
+        ]);
+
+        return redirect()->route('driver.dashboard')->with('success', 'Driver profile submitted. Awaiting admin approval.');
     }
 
-    public function searchBtn(Request $request)
-    {
-        $exist = Passenger::select('bookingRefNo')
-            ->where('bookingRefNo', $request->input('bookingInput'))
-            ->first();
-        $this->agent = new Agent();
+    public function completeDelivery(DeliveryRequest $delivery)
+{
+    if (auth()->user()->driver && auth()->user()->driver->id === $delivery->driver_id) {
+        $delivery->status = 'done';
+        $delivery->save();
 
-        // If bookingInput is empty, we display status = Unassigned bookings
-        if (!($request->input('bookingInput'))) {
-            $Passengers = Passenger::where('status', 'Unassigned')
-                ->orderBy('created_at', 'desc')
-                ->take(7)
-                ->paginate(7)
-                ->withQueryString();
-
-            return view('admin.table', [
-                'title' => 'All Passengers Recent Booking',
-                "passengers" => $Passengers,
-                'agent' => $this->agent,
-            ]);
-        } else {
-            // If bookingInput is NOT empty, we display the specific booking info
-            if ($exist) {
-                $Passengers = Passenger::where('bookingRefNo', $request->input('bookingInput'))
-                    ->paginate(3)
-                    ->withQueryString();
-
-                return view('admin.table', [
-                    'title' => 'All Passengers Recent Booking',
-                    "passengers" => $Passengers,
-                    'agent' => $this->agent,
-                ]);
-            } else {
-                // If bookingInput is NOT empty, And not exist, we display error message
-                return redirect('/admin')->with('unassignedError', 'This Booking Number Did Not Exist');
-            }
-        }
+        return back()->with('success', 'Delivery marked as completed.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Driver  $driver
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Driver $driver)
-    {
-        //
-    }
+    return back()->with('error', 'Unauthorized.');
+}
 }
