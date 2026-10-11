@@ -16,6 +16,11 @@ class Location extends Model
         'address',
         'lat',
         'lng',
+        'location_updated_at',
+    ];
+
+    protected $casts = [
+        'location_updated_at' => 'datetime',
     ];
 
     public function user()

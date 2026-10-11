@@ -1,7 +1,8 @@
 @extends('layouts.main')
 
-@section('content')
-<div class="container">
+@section('container')
+@include('partials.navbar')
+<div class="container" style="margin-top: 100px;">
     <h4>Live Delivery #{{ $delivery->id }}</h4>
     <div id="map" style="height: 500px;" class="mb-3"></div>
 
@@ -37,13 +38,14 @@ function initMap() {
 
 // Send location to backend
 function sendLocation(lat, lng) {
-    fetch('/api/driver/update-location', {
+    fetch('{{ url('/api/tracking/update-location') }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer {{ auth()->user()->createToken("driver")->plainTextToken }}'
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ lat, lng })
+        body: JSON.stringify({ delivery_id: {{ $delivery->id }}, lat, lng })
     });
 }
 

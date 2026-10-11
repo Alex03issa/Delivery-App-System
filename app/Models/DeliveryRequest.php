@@ -63,6 +63,38 @@ class DeliveryRequest extends Model
         });
     }
 
+    /**
+     * Can this user see the delivery (tracking page, chat, payment)?
+     * Admins see everything, clients see their own requests and drivers see
+     * the deliveries assigned to them.
+     */
+    public function isVisibleTo(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        if ($user->client && (int) $user->client->id === (int) $this->client_id) {
+            return true;
+        }
+
+        return $user->driver && $this->driver_id && (int) $user->driver->id === (int) $this->driver_id;
+    }
+
+    public function isOwnedByClient(?User $user): bool
+    {
+        return $user && $user->client && (int) $user->client->id === (int) $this->client_id;
+    }
+
+    public function isAssignedToDriver(?User $user): bool
+    {
+        return $user && $user->driver && $this->driver_id && (int) $user->driver->id === (int) $this->driver_id;
+    }
+
     // Relationships
     public function client()
     {

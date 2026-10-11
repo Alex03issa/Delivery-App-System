@@ -90,7 +90,7 @@ function updateRouteAndETA(origin, destination) {
 }
 
 function updateMapAndETA() {
-    fetch(`/api/tracking/driver-location/${driverId}`)
+    fetch(`{{ url('/api/tracking/driver-location') }}/${driverId}`, { headers: { 'Accept': 'application/json' } })
         .then(res => res.json())
         .then(data => {
             const driverPos = {
@@ -116,7 +116,7 @@ function checkDriverOnlineStatus() {
 }
 
 // Initialize map with current driver location
-fetch(`/api/tracking/driver-location/${driverId}`)
+fetch(`{{ url('/api/tracking/driver-location') }}/${driverId}`, { headers: { 'Accept': 'application/json' } })
     .then(res => res.json())
     .then(data => {
         const initialPos = {
@@ -135,7 +135,7 @@ fetch(`/api/tracking/driver-location/${driverId}`)
 
 
 function updateDriverPosition() {
-    fetch(`/api/tracking/driver-location/${driverId}`)
+    fetch(`{{ url('/api/tracking/driver-location') }}/${driverId}`, { headers: { 'Accept': 'application/json' } })
         .then(res => res.json())
         .then(data => {
             if (!data.lat || !data.lng) return;
